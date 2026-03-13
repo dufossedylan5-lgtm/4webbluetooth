@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DYLAN Interrupteur</title>
+
+<!-- NippleJS -->
+<script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.1/dist/nipplejs.min.js"></script>
+
+<style>
+body {
+    background: #111;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+}
+
+#zone {
+    width: 200px;
+    height: 200px;
+    margin: 40px auto;
+    background: #222;
+    border-radius: 20px;
+}
+
+#etat {
+    font-size: 2em;
+    margin-top: 20px;
+}
+
+button {
+    font-size: 1.2em;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Interrupteur Dylan</h1>
+
+<button onclick="connect()">🔗 Connexion BLE</button>
+
+<div id="zone"></div>
+
+<div id="etat">OFF</div>
+
+<script>
+
+// =======================
+// UUID BLE ESP32
+// =======================
+const SERVICE_UUID = '0526b6db-d860-413e-a5a9-828ddf2ceba6';
+const COLOR_UUID   = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
+const BRIGHT_UUID  = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
+
+let device, server, colorChar, brightChar;
+
+
+// =======================
+// Connexion BLE
+// =======================
+async function connect() {
+
+    device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [SERVICE_UUID]
+    });
+
+    server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+
+    colorChar  = await service.getCharacteristic(COLOR_UUID);
+    brightChar = await service.getCharacteristic(BRIGHT_UUID);
+
+    alert("ESP32 connecté !");
+}
+
+
+// =======================
+// Création du nipple
+// =======================
+const joystick = nipplejs.create({
+    zone: document.getElementById('zone'),
+    mode: 'static',
+    position: { left: '50%', top: '50%' },
+    color: 'white',
+    size: 120
+});
+
+
+// =======================
+// ON (appui)
+// =======================
+joystick.on('start', () => {
+
+    if (!brightChar) return;
+
+    document.getElementById("etat").innerText = "ON";
+
+    // luminosité max
+    brightChar.writeValue(new Uint8Array([100]));
+
+});
+
+
+// =======================
+// OFF (relâchement)
+// =======================
+joystick.on('end', () => {
+
+    if (!brightChar) return;
+
+    document.getElementById("etat").innerText = "OFF";
+
+    brightChar.writeValue(new Uint8Array([0]));
+
+});
+
+</script>
+
+</body>
+</html>
