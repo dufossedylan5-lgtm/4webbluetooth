@@ -29,7 +29,7 @@ button{
     position:relative;
 }
 
-/* bouton mobile */
+/* bouton mobile neutre */
 #switch{
     width:100px;
     height:100px;
@@ -37,14 +37,13 @@ button{
     position:absolute;
     top:10px;
     left:10px;
-    background:red;
+    background:white;
     transition:0.3s;
 }
 
 /* position ON */
 .on{
     left:110px !important;
-    background:lime !important;
 }
 
 #etat{
@@ -76,7 +75,6 @@ const COLOR_UUID   = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
 const BRIGHT_UUID  = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
 
 let device, server, colorChar, brightChar;
-
 let state = false;
 
 
@@ -101,7 +99,7 @@ alert("ESP32 connecté !");
 
 
 // =======================
-// NippleJS zone tactile
+// Zone tactile NippleJS
 // =======================
 const joystick = nipplejs.create({
 zone: document.getElementById('zone'),
@@ -125,6 +123,7 @@ if(state){
 document.getElementById("etat").innerText="ON";
 sw.classList.add("on");
 
+/* LED ESP32 verte */
 if(colorChar)
 colorChar.writeValue(new Uint8Array([0,255,0]));
 
@@ -136,6 +135,7 @@ brightChar.writeValue(new Uint8Array([100]));
 document.getElementById("etat").innerText="OFF";
 sw.classList.remove("on");
 
+/* LED ESP32 rouge */
 if(colorChar)
 colorChar.writeValue(new Uint8Array([255,0,0]));
 
