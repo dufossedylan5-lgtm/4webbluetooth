@@ -2,36 +2,55 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>DYLAN  Interrupteur</title>
+<title>DYLAN Interrupteur</title>
 
-<!-- NippleJS -->
 <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.1/dist/nipplejs.min.js"></script>
 
 <style>
-body {
-    background: #111;
-    color: white;
-    text-align: center;
-    font-family: Arial;
+
+body{
+    background:#111;
+    color:white;
+    text-align:center;
+    font-family:Arial;
 }
 
-#zone {
-    width: 200px;
-    height: 200px;
-    margin: 40px auto;
-    background: #222;
-    border-radius: 20px;
+button{
+    font-size:1.2em;
+    padding:10px;
 }
 
-#etat {
-    font-size: 2em;
-    margin-top: 20px;
+#zone{
+    width:220px;
+    height:120px;
+    margin:40px auto;
+    background:#333;
+    border-radius:60px;
+    position:relative;
 }
 
-button {
-    font-size: 1.2em;
-    padding: 10px;
+/* bouton mobile */
+#switch{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    position:absolute;
+    top:10px;
+    left:10px;
+    background:red;
+    transition:0.3s;
 }
+
+/* position ON */
+.on{
+    left:110px !important;
+    background:lime !important;
+}
+
+#etat{
+    font-size:2em;
+}
+
 </style>
 </head>
 
@@ -41,14 +60,16 @@ button {
 
 <button onclick="connect()">🔗 Connexion BLE</button>
 
-<div id="zone"></div>
+<div id="zone">
+<div id="switch"></div>
+</div>
 
 <div id="etat">OFF</div>
 
 <script>
 
 // =======================
-// UUID BLE ESP32
+// UUID BLE
 // =======================
 const SERVICE_UUID = '0526b6db-d860-413e-a5a9-828ddf2ceba6';
 const COLOR_UUID   = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
@@ -56,64 +77,72 @@ const BRIGHT_UUID  = '0526b6db-d861-413e-a5a9-828ddf2ceba6';
 
 let device, server, colorChar, brightChar;
 
+let state = false;
+
 
 // =======================
 // Connexion BLE
 // =======================
-async function connect() {
+async function connect(){
 
-    device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: [SERVICE_UUID]
-    });
+device = await navigator.bluetooth.requestDevice({
+acceptAllDevices:true,
+optionalServices:[SERVICE_UUID]
+});
 
-    server = await device.gatt.connect();
-    const service = await server.getPrimaryService(SERVICE_UUID);
+server = await device.gatt.connect();
+const service = await server.getPrimaryService(SERVICE_UUID);
 
-    colorChar  = await service.getCharacteristic(COLOR_UUID);
-    brightChar = await service.getCharacteristic(BRIGHT_UUID);
+colorChar  = await service.getCharacteristic(COLOR_UUID);
+brightChar = await service.getCharacteristic(BRIGHT_UUID);
 
-    alert("ESP32 connecté !");
+alert("ESP32 connecté !");
 }
 
 
 // =======================
-// Création du nipple
+// NippleJS zone tactile
 // =======================
 const joystick = nipplejs.create({
-    zone: document.getElementById('zone'),
-    mode: 'static',
-    position: { left: '50%', top: '50%' },
-    color: 'white',
-    size: 120
+zone: document.getElementById('zone'),
+mode:'static',
+position:{left:'50%',top:'50%'},
+color:'transparent'
 });
 
 
 // =======================
-// ON (appui)
+// Toggle interrupteur
 // =======================
-joystick.on('start', () => {
+joystick.on('start', ()=>{
 
-    if (!brightChar) return;
+state = !state;
 
-    document.getElementById("etat").innerText = "ON";
+const sw = document.getElementById("switch");
 
-    // luminosité max
-    brightChar.writeValue(new Uint8Array([100]));
+if(state){
 
-});
+document.getElementById("etat").innerText="ON";
+sw.classList.add("on");
 
+if(colorChar)
+colorChar.writeValue(new Uint8Array([0,255,0]));
 
-// =======================
-// OFF (relâchement)
-// =======================
-joystick.on('end', () => {
+if(brightChar)
+brightChar.writeValue(new Uint8Array([100]));
 
-    if (!brightChar) return;
+}else{
 
-    document.getElementById("etat").innerText = "OFF";
+document.getElementById("etat").innerText="OFF";
+sw.classList.remove("on");
 
-    brightChar.writeValue(new Uint8Array([0]));
+if(colorChar)
+colorChar.writeValue(new Uint8Array([255,0,0]));
+
+if(brightChar)
+brightChar.writeValue(new Uint8Array([100]));
+
+}
 
 });
 
